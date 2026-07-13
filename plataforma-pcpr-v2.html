@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCPR Delegado — Plataforma de Estudos</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#222637;--border:#2e3248;--border2:#3d4260;
+  --text:#e8e9f0;--muted:#7b7f9e;--accent:#4f7ef8;--green:#22c97a;--amber:#f5a623;
+  --red:#f05252;--purple:#a78bfa;--radius:10px;--font:'Segoe UI',system-ui,sans-serif;
+}
+html{font-size:14px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.logo{padding:1.1rem 1rem .9rem;border-bottom:1px solid var(--border)}
+.logo h1{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.5px;text-transform:uppercase}
+.logo p{font-size:10px;color:var(--muted);margin-top:2px}
+.nav-section{padding:.6rem 0}
+.nav-label{font-size:10px;font-weight:600;color:var(--muted);padding:.2rem 1rem .4rem;text-transform:uppercase;letter-spacing:.5px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:.5rem 1rem;font-size:12px;color:var(--muted);cursor:pointer;transition:.15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-item.active{color:var(--accent);background:rgba(79,126,248,.08);border-left-color:var(--accent)}
+.sidebar-footer{margin-top:auto;padding:.85rem 1rem;border-top:1px solid var(--border);font-size:10px;color:var(--muted);line-height:1.6}
+.countdown-box{background:rgba(79,126,248,.1);border:1px solid rgba(79,126,248,.3);border-radius:8px;padding:.5rem .75rem;margin:.75rem 1rem;text-align:center}
+.countdown-num{font-size:22px;font-weight:700;color:var(--accent)}
+.countdown-label{font-size:10px;color:var(--muted)}
+.topbar{padding:.85rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:var(--surface);flex-shrink:0}
+.topbar-title{font-size:15px;font-weight:600}
+.topbar-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.date-badge{font-size:11px;color:var(--muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border)}
+.content{padding:1.1rem 1.4rem;flex:1}
+.page{display:none}.page.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.7rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem .9rem}
+.kpi-label{font-size:10px;color:var(--muted);margin-bottom:3px}
+.kpi-value{font-size:20px;font-weight:700}
+.kpi-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:pointer;transition:.15s;font-family:var(--font)}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#3d6be0}
+.btn-success{background:var(--green);border-color:var(--green);color:#0a1a10}
+.btn-sm{padding:3px 9px;font-size:11px}
+.tag{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+.tag-done{background:rgba(34,201,122,.15);color:var(--green)}
+.tag-progress{background:rgba(245,166,35,.15);color:var(--amber)}
+.tag-pending{background:rgba(123,127,158,.1);color:var(--muted)}
+.tag-review{background:rgba(79,126,248,.15);color:var(--accent)}
+.tag-exercise{background:rgba(167,139,250,.15);color:var(--purple)}
+.progress-wrap{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;transition:width .4s}
+/* CALENDÁRIO */
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:3px}
+.cal-day-name{font-size:10px;color:var(--muted);text-align:center;padding:3px 0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-cell{min-height:78px;background:var(--surface2);border-radius:7px;padding:4px 5px;border:1px solid var(--border);cursor:pointer;transition:.15s}
+.cal-cell:hover{border-color:var(--accent)}
+.cal-cell.today{border-color:var(--accent);background:rgba(79,126,248,.08)}
+.cal-cell.other-month{opacity:.3}
+.cal-cell.selected{border-color:var(--green);background:rgba(34,201,122,.07)}
+.cal-cell.prova-day{border-color:var(--red)!important;background:rgba(240,82,82,.1)!important}
+.cal-cell.deadline-day{border-color:var(--amber)!important;background:rgba(245,166,35,.08)!important}
+.cal-date{font-size:11px;font-weight:600;color:var(--muted)}
+.cal-cell.today .cal-date{color:var(--accent)}
+.cal-task-dot{font-size:9px;padding:1px 3px;border-radius:3px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot-study{background:rgba(79,126,248,.2);color:var(--accent)}
+.dot-review{background:rgba(34,201,122,.2);color:var(--green)}
+.dot-exercise{background:rgba(167,139,250,.2);color:var(--purple)}
+/* TAREFAS */
+.task-item{display:flex;align-items:center;gap:8px;padding:.55rem .7rem;background:var(--surface2);border-radius:8px;margin-bottom:5px;border:1px solid var(--border);transition:.15s}
+.task-item:hover{border-color:var(--border2)}
+.task-check{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.15s}
+.task-check.done{background:var(--green);border-color:var(--green)}
+.task-check.done::after{content:'✓';font-size:10px;color:#0a1a10;font-weight:700}
+.task-info{flex:1}
+.task-name{font-size:12px;font-weight:500}
+.task-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.task-right{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.task-item.done-task .task-name{text-decoration:line-through;opacity:.5}
+/* MATÉRIAS */
+.subject-card{border:1px solid var(--border);border-radius:var(--radius);margin-bottom:7px;overflow:hidden}
+.subject-header{padding:.65rem .9rem;cursor:pointer;display:flex;align-items:center;gap:9px;background:var(--surface);transition:.15s}
+.subject-header:hover{background:var(--surface2)}
+.subject-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.subject-info{flex:1}
+.subject-name{font-size:12px;font-weight:600}
+.subject-stats{font-size:10px;color:var(--muted);margin-top:1px}
+.subject-pct{font-size:13px;font-weight:700;min-width:38px;text-align:right}
+.subject-chevron{font-size:11px;color:var(--muted);transition:transform .2s}
+.subject-chevron.open{transform:rotate(180deg)}
+.subject-body{display:none;background:var(--bg)}
+.subject-body.open{display:block}
+.topic-row{display:flex;align-items:center;gap:7px;padding:.45rem .9rem .45rem 1.3rem;border-top:1px solid var(--border)}
+.topic-name{font-size:11px;flex:1}
+.topic-pct{font-size:11px;font-weight:600;min-width:32px;text-align:right}
+.topic-bar{width:70px}
+.topic-btn{font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer}
+.topic-btn:hover{border-color:var(--accent);color:var(--accent)}
+/* POMODORO */
+.pomo-container{display:flex;flex-direction:column;align-items:center;gap:14px;padding:1.2rem 0}
+.pomo-ring{position:relative;width:150px;height:150px}
+.pomo-svg{transform:rotate(-90deg)}
+.pomo-track{fill:none;stroke:var(--surface2);stroke-width:8}
+.pomo-progress{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .5s}
+.pomo-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.pomo-time{font-size:30px;font-weight:700;letter-spacing:-1px}
+.pomo-phase{font-size:10px;color:var(--muted);margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+.pomo-dots{display:flex;gap:7px}
+.pomo-dot{width:10px;height:10px;border-radius:50%;background:var(--surface2);border:2px solid var(--border2);transition:.3s}
+.pomo-dot.active{background:var(--amber);border-color:var(--amber)}
+.pomo-controls{display:flex;gap:7px}
+.mode-btn{font-size:11px;padding:4px 11px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer}
+.mode-btn.active{background:rgba(79,126,248,.15);border-color:var(--accent);color:var(--accent)}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.4rem;width:350px;max-width:92vw}
+.modal h3{font-size:14px;font-weight:600;margin-bottom:.9rem}
+.modal label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px}
+.modal input,.modal select{width:100%;padding:6px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:var(--font);margin-bottom:9px}
+.modal input:focus,.modal select:focus{outline:none;border-color:var(--accent)}
+.modal-btns{display:flex;gap:7px;justify-content:flex-end;margin-top:.65rem}
+.pct-display{font-size:26px;font-weight:700;text-align:center;color:var(--accent);margin:.4rem 0}
+input[type=range]{accent-color:var(--accent)}
+/* MISC */
+.divider{height:1px;background:var(--border);margin:.65rem 0}
+.empty{text-align:center;padding:1.5rem;color:var(--muted);font-size:12px}
+.flex-between{display:flex;align-items:center;justify-content:space-between}
+.flex-gap{display:flex;align-items:center;gap:7px}
+.mb8{margin-bottom:8px}.mb10{margin-bottom:10px}
+.section-title{font-size:13px;font-weight:600;margin-bottom:9px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.bar-label{font-size:11px;color:var(--muted);width:130px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-wrap{flex:1;height:5px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px}
+.bar-val{font-size:11px;font-weight:600;min-width:34px;text-align:right}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="logo">
+    <h1>⚖ PCPR Estudos</h1>
+    <p>Delegado de Polícia · 2026</p>
+  </div>
+  <div class="countdown-box">
+    <div class="countdown-num" id="diasRestantes">—</div>
+    <div class="countdown-label">dias para a prova</div>
+    <div style="font-size:9px;color:var(--muted);margin-top:2px">11 out 2026</div>
+  </div>
+  <nav class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="goTo('hoje',this)">📅 Hoje</div>
+    <div class="nav-item" onclick="goTo('calendario',this)">🗓 Calendário</div>
+    <div class="nav-item" onclick="goTo('materias',this)">📚 Matérias</div>
+    <div class="nav-item" onclick="goTo('pomodoro',this)">🍅 Pomodoro</div>
+    <div class="nav-item" onclick="goTo('desempenho',this)">📊 Desempenho</div>
+  </nav>
+  <nav class="nav-section">
+    <div class="nav-label">Configurações</div>
+    <div class="nav-item" onclick="goTo('config',this)">⚙ Configurar plano</div>
+    <div class="nav-item" onclick="exportData()">💾 Exportar dados</div>
+    <div class="nav-item" onclick="importData()">📥 Importar dados</div>
+  </nav>
+  <div class="sidebar-footer">Marcus · PCPR Delegado<br>Edital 01/2026 · FGV</div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">Hoje</div>
+      <div class="topbar-sub" id="pageSub">Suas metas do dia — 5h de estudo</div>
+    </div>
+    <div class="flex-gap">
+      <div class="date-badge" id="dateBadge"></div>
+      <button class="btn btn-primary btn-sm" onclick="openAddTask()">+ Tarefa</button>
+      <button class="btn btn-sm" onclick="openExercicio('')">📊 Registrar exercício</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- HOJE -->
+    <div class="page active" id="page-hoje">
+      <div class="grid4 mb10">
+        <div class="kpi"><div class="kpi-label">Progresso geral</div><div class="kpi-value" id="kpiGeral" style="color:var(--amber)">0%</div><div class="kpi-sub">conteúdo estudado</div></div>
+        <div class="kpi"><div class="kpi-label">Tarefas hoje</div><div class="kpi-value" id="kpiHoje" style="color:var(--accent)">0</div><div class="kpi-sub" id="kpiHojeSub">pendentes</div></div>
+        <div class="kpi"><div class="kpi-label">Horas planejadas</div><div class="kpi-value" style="color:var(--green)">5h</div><div class="kpi-sub">por dia</div></div>
+        <div class="kpi"><div class="kpi-label">Tópicos concluídos</div><div class="kpi-value" id="kpiTopicos" style="color:var(--purple)">0</div><div class="kpi-sub">de <span id="kpiTotal">0</span> no plano</div></div>
+      </div>
+      <div class="grid2">
+        <div>
+          <div class="flex-between mb8">
+            <div class="section-title">Metas de hoje</div>
+            <button class="btn btn-sm btn-primary" onclick="gerarMetas()">↻ Gerar metas do dia</button>
+          </div>
+          <div id="listaTarefasHoje"><div class="empty">Clique em "Gerar metas do dia" para criar suas tarefas de hoje.</div></div>
+        </div>
+        <div>
+          <div class="section-title mb8">Próximas revisões e exercícios</div>
+          <div id="listaRevisoes"><div class="empty">Nenhuma revisão agendada ainda.<br><br>Conclua tópicos em Matérias para gerar revisões automáticas.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDÁRIO -->
+    <div class="page" id="page-calendario">
+      <div class="flex-between mb10">
+        <div class="flex-gap">
+          <button class="btn btn-sm" onclick="calPrev()">‹</button>
+          <strong id="calMonthLabel" style="font-size:13px"></strong>
+          <button class="btn btn-sm" onclick="calNext()">›</button>
+        </div>
+        <div class="flex-gap" style="font-size:10px;color:var(--muted)">
+          <span style="background:rgba(240,82,82,.2);color:var(--red);padding:2px 8px;border-radius:4px">■ Prova 11/out</span>
+          <span style="background:rgba(245,166,35,.15);color:var(--amber);padding:2px 8px;border-radius:4px">■ Deadline 4/out</span>
+          <span class="tag tag-review">● Revisão</span>
+          <span class="tag tag-exercise">● Exercício</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cal-header">
+          <div class="cal-day-name">Dom</div><div class="cal-day-name">Seg</div><div class="cal-day-name">Ter</div>
+          <div class="cal-day-name">Qua</div><div class="cal-day-name">Qui</div><div class="cal-day-name">Sex</div><div class="cal-day-name">Sáb</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="card" id="calDayDetail" style="margin-top:9px;display:none">
+        <div class="card-title" id="calDayTitle"></div>
+        <div id="calDayTasks"></div>
+      </div>
+    </div>
+
+    <!-- MATÉRIAS -->
+    <div class="page" id="page-materias">
+      <div class="flex-between mb10">
+        <div class="section-title">Matérias — Edital PCPR Delegado 2026</div>
+        <div class="flex-gap">
+          <button class="btn btn-sm" onclick="expandAll()">Expandir tudo</button>
+          <button class="btn btn-sm" onclick="collapseAll()">Recolher</button>
+        </div>
+      </div>
+      <div id="subjectList"></div>
+    </div>
+
+    <!-- POMODORO -->
+    <div class="page" id="page-pomodoro">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Timer Pomodoro</div>
+          <div class="pomo-container">
+            <div style="font-size:11px;color:var(--muted);text-align:center" id="pomoTaskLabel">Selecione uma tarefa na tela Hoje</div>
+            <div class="pomo-ring">
+              <svg class="pomo-svg" width="150" height="150" viewBox="0 0 150 150">
+                <circle class="pomo-track" cx="75" cy="75" r="63"/>
+                <circle class="pomo-progress" id="pomoCircle" cx="75" cy="75" r="63" stroke-dasharray="396" stroke-dashoffset="0"/>
+              </svg>
+              <div class="pomo-center">
+                <div class="pomo-time" id="pomoTime">25:00</div>
+                <div class="pomo-phase" id="pomoPhase">pronto</div>
+              </div>
+            </div>
+            <div class="pomo-dots">
+              <div class="pomo-dot" id="pd0"></div><div class="pomo-dot" id="pd1"></div>
+              <div class="pomo-dot" id="pd2"></div><div class="pomo-dot" id="pd3"></div>
+            </div>
+            <div class="pomo-controls">
+              <button class="btn btn-primary" id="pomoBtn" onclick="pomoToggle()">▶ Iniciar</button>
+              <button class="btn" onclick="pomoReset()">↺ Reiniciar</button>
+            </div>
+            <div class="flex-gap">
+              <button class="mode-btn active" onclick="pomoSetMode('standard',this)">Standard 25/5</button>
+              <button class="mode-btn" onclick="pomoSetMode('focus',this)">Alta Foco 50/10</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Ciclo do dia — 5 horas de foco</div>
+          <div id="pomoCycleInfo" style="font-size:12px;color:var(--muted);line-height:2"></div>
+          <div class="divider"></div>
+          <div class="card-title">Sequência de revisão espaçada</div>
+          <div style="font-size:11px;color:var(--muted);line-height:2">
+            Ao concluir 100% de um tópico, o sistema agenda:<br>
+            🔁 Revisões: +2, +7, +15, +21, +30, +60, +90 dias<br>
+            📝 Exercícios: +3, +8, +16, +31, +91 dias<br>
+            <span style="color:var(--accent)">Fins de semana são pulados automaticamente.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESEMPENHO -->
+    <div class="page" id="page-desempenho">
+      <div class="grid4 mb10">
+        <div class="kpi"><div class="kpi-label">Taxa de acerto geral</div><div class="kpi-value" id="dAccGeral" style="color:var(--green)">—</div><div class="kpi-sub">em exercícios</div></div>
+        <div class="kpi"><div class="kpi-label">Questões respondidas</div><div class="kpi-value" id="dQuestoes" style="color:var(--accent)">0</div><div class="kpi-sub">total acumulado</div></div>
+        <div class="kpi"><div class="kpi-label">Exercícios feitos</div><div class="kpi-value" id="dExercicios" style="color:var(--purple)">0</div><div class="kpi-sub">baterias concluídas</div></div>
+        <div class="kpi"><div class="kpi-label">Melhor matéria</div><div class="kpi-value" id="dMelhor" style="color:var(--amber);font-size:12px">—</div><div class="kpi-sub">maior acerto</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Taxa de acerto por matéria</div>
+          <div id="accBySubject"><div class="empty">Registre exercícios para ver os dados.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Últimos exercícios registrados</div>
+          <div id="lastExercises"><div class="empty">Nenhum exercício registrado ainda.</div></div>
+          <button class="btn btn-success" style="width:100%;margin-top:10px" onclick="openExercicio('')">📊 Registrar novo exercício</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="page" id="page-config">
+      <div class="section-title mb10">Configurar plano de estudos</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">Dias de estudo por semana</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px" id="weekDaysConfig"></div>
+          <div class="card-title">Horas por dia</div>
+          <div class="flex-gap mb10">
+            <input type="range" min="1" max="12" value="5" id="horasSlider" oninput="document.getElementById('horasVal').textContent=this.value+'h'" style="flex:1">
+            <span id="horasVal" style="font-size:14px;font-weight:700;color:var(--accent);min-width:30px">5h</span>
+          </div>
+          <div class="card-title">Data de início dos estudos</div>
+          <input type="date" id="startDate" style="width:100%;padding:6px 9px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;margin-bottom:12px">
+          <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">Salvar configurações</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Resumo do plano</div>
+          <div id="planSummary" style="font-size:12px;color:var(--muted);line-height:2.2"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODAL PROGRESSO -->
+<div class="modal-bg" id="modalProgress">
+  <div class="modal">
+    <h3 id="modalTitle">Atualizar progresso</h3>
+    <div id="modalTopicName" style="font-size:12px;color:var(--text);margin-bottom:8px"></div>
+    <div class="pct-display" id="modalPct">0%</div>
+    <input type="range" min="0" max="100" step="5" id="modalSlider" oninput="document.getElementById('modalPct').textContent=this.value+'%'" style="width:100%;margin-bottom:10px">
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modalProgress')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTopicProgress()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXERCÍCIO -->
+<div class="modal-bg" id="modalExercicio">
+  <div class="modal">
+    <h3>Registrar resultado de exercício</h3>
+    <label>Matéria</label>
+    <select id="exSubject"></select>
+    <label>Total de questões respondidas</label>
+    <input type="number" id="exTotal" min="1" max="200" value="10">
+    <label>Questões corretas</label>
+    <input type="number" id="exCorrect" min="0" max="200" value="7">
+    <label>Data</label>
+    <input type="date" id="exDate">
+    <label>Observações (opcional)</label>
+    <input type="text" id="exNotes" placeholder="Ex: foquei em prisão preventiva...">
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modalExercicio')">Cancelar</button>
+      <button class="btn btn-success" onclick="saveExercicio()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADD TASK -->
+<div class="modal-bg" id="modalAddTask">
+  <div class="modal">
+    <h3>Adicionar tarefa manual</h3>
+    <label>Tipo</label>
+    <select id="taskType">
+      <option value="study">📖 Estudo teórico</option>
+      <option value="review">🔁 Revisão</option>
+      <option value="exercise">📝 Exercício</option>
+    </select>
+    <label>Matéria</label>
+    <select id="taskSubject"></select>
+    <label>Data</label>
+    <input type="date" id="taskDate">
+    <label>Duração (horas)</label>
+    <input type="number" id="taskDuration" min="0.5" max="8" step="0.5" value="1">
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal('modalAddTask')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTask()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// CONSTANTES
+// =============================================
+const PROVA_DATE   = '2026-10-11';
+const DEADLINE_DATE= '2026-10-04';
+const REVIEW_INTERVALS   = [2,7,15,21,30,60,90];
+const EXERCISE_INTERVALS = [3,8,16,31,91];
+
+const EDITAL_SUBJECTS = [
+  { id:'penal', name:'Direito Penal', icon:'⚖', color:'#f05252', hoursTotal:40,
+    topics:['Princípios Fundamentais do Direito Penal','Aplicação da Lei Penal','Teoria Geral do Crime','Concurso de Pessoas','Teoria da Pena','Extinção da Punibilidade','Crimes Contra a Pessoa','Crimes Contra o Patrimônio','Crimes Contra a Dignidade Sexual','Crimes Contra a Fé Pública','Crimes Contra a Administração Pública','Crimes em Licitações e Contratos','Crimes de Trânsito','Crimes Eleitorais','Crimes contra a Ordem Tributária','Crimes de Abuso de Autoridade','Crimes de Tráfico de Drogas','Crimes de Preconceito Racial','Organizações Criminosas','Crimes Hediondos','Lavagem de Capitais','Crimes Cibernéticos','Lei Maria da Penha','Lei Henry Borel','Estatuto do Desarmamento','Crimes de Tortura','ECA — Crimes','Estatuto do Idoso','Lei das Contravenções Penais']},
+  { id:'dpp', name:'Direito Processual Penal', icon:'📋', color:'#4f7ef8', hoursTotal:35,
+    topics:['Princípios do Processo Penal','Sistemas Processuais Penais','Inquérito Policial','Ação Penal','Competência','Prova','Medidas Cautelares Pessoais','Prisão e Liberdade Provisória','Citações e Intimações','Sentença Penal','Recursos','Nulidades','Procedimentos Especiais','Lei de Prisão Temporária','Investigação Criminal — Lei 12.830','Lei de Proteção a Vítimas','Juizados Especiais Criminais','Colaboração Premiada','Lei de Interceptação Telefônica','Investigação Criminal Digital']},
+  { id:'legpenal', name:'Legislação Penal Extravagante', icon:'📜', color:'#a78bfa', hoursTotal:30,
+    topics:['LEP — Lei de Execução Penal','Crimes Hediondos — Lei 8.072','Crimes contra Ordem Tributária','Lei de Interceptação Telefônica','Lei de Tortura','Lei de Lavagem de Dinheiro','CTB — Crimes de Trânsito','Estatuto do Desarmamento','Lei Maria da Penha','Lei de Drogas','Organizações Criminosas','Lei Antiterrorismo','Lei de Abuso de Autoridade','Pacote Anticrime','Marco Legal Crime Organizado','Colaboração Premiada e Meios Especiais']},
+  { id:'const', name:'Direito Constitucional', icon:'🏛', color:'#22c97a', hoursTotal:25,
+    topics:['Teoria da Constituição','Controle de Constitucionalidade','Direitos e Garantias Fundamentais','Organização do Estado','Organização dos Poderes','Defesa do Estado e Instituições Democráticas','Segurança Pública na CF','Ordem Social','Constituição do Estado do Paraná']},
+  { id:'admin', name:'Direito Administrativo', icon:'🏢', color:'#f5a623', hoursTotal:25,
+    topics:['Conceito e Fontes do Dir. Administrativo','Princípios da Administração Pública','Administração Pública — Estrutura','Atos Administrativos','Poderes da Administração','Serviços Públicos','Licitações — Lei 14.133/2021','Responsabilidade Civil do Estado','Controle da Administração Pública','Improbidade Administrativa','Gestão Pública e Governança','Organização da PCPR']},
+  { id:'legest', name:'Legislação Estadual e Institucional', icon:'🔍', color:'#06b6d4', hoursTotal:15,
+    topics:['Constituição do Paraná — Adm. Pública','Carreiras PCPR — LC 259/2023','Lei Orgânica Nacional das Polícias Civis','Lei Orgânica PCPR — Lei 23.213/2026','Código Disciplinar PCPR','Regime Jurídico Servidores PR','LGPD — Lei 13.709/2018','Lei de Acesso à Informação','Lei de Identificação Criminal']},
+  { id:'dh', name:'Direitos Humanos', icon:'🤝', color:'#ec4899', hoursTotal:10,
+    topics:['Teoria Geral dos Direitos Humanos','Sistemas de Proteção dos DH','Democracia, Cidadania e DH','Grupos Vulneráveis e DH','Segurança Pública e DH','Política Nacional de DH','Agenda 2030 e ODS']},
+  { id:'forense', name:'Ciências Forenses e Criminologia', icon:'🔬', color:'#f97316', hoursTotal:20,
+    topics:['Medicina Legal — Conceito e Divisão','Antropologia Forense e Identificação Humana','Sexologia Forense','Traumatologia Forense','Tanatologia Forense','Toxicologia Forense','Psicopatologia Forense','Documentoscopia e Grafoscopia','Criminologia — Conceito e Método','Escolas Criminológicas','Vitimologia','Controle Social do Crime','Criminologia Digital']}
+];
+
+// =============================================
+// STATE
+// =============================================
+let state = {
+  subjects:[], tasks:[], performance:[],
+  config:{ weekDays:[1,2,3,4,5], hoursPerDay:5, startDate:todayStr() },
+  calMonth: null
+};
+
+function todayStr(){return new Date().toISOString().split('T')[0]}
+function addDays(ds,n){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return d.toISOString().split('T')[0]}
+function nextWorkday(ds,valid){let d=new Date(ds+'T00:00:00');let t=0;while(!valid.includes(d.getDay())&&t<14){d.setDate(d.getDate()+1);t++}return d.toISOString().split('T')[0]}
+function formatDate(ds){if(!ds)return'';const d=new Date(ds+'T00:00:00');return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}
+function formatDateLong(ds){if(!ds)return'';const d=new Date(ds+'T00:00:00');return d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}
+function daysUntil(ds){const t=new Date(ds+'T00:00:00');const n=new Date(todayStr()+'T00:00:00');return Math.round((t-n)/(1000*60*60*24))}
+
+function loadState(){
+  try{const s=localStorage.getItem('pcpr_v2');if(s){const p=JSON.parse(s);state={...state,...p};state.calMonth=null;}}catch(e){}
+  initSubjects();
+}
+function saveState(){localStorage.setItem('pcpr_v2',JSON.stringify({...state,calMonth:null}))}
+
+function initSubjects(){
+  EDITAL_SUBJECTS.forEach(ed=>{
+    if(!state.subjects.find(s=>s.id===ed.id)){
+      state.subjects.push({
+        id:ed.id,name:ed.name,icon:ed.icon,color:ed.color,hoursTotal:ed.hoursTotal,
+        topics:ed.topics.map((t,i)=>({id:ed.id+'_'+i,name:t,pct:0,completedAt:null}))
+      });
+    }
+  });
+  saveState();
+}
+
+// =============================================
+// COUNTDOWN
+// =============================================
+function updateCountdown(){
+  const days=daysUntil(PROVA_DATE);
+  document.getElementById('diasRestantes').textContent=days>0?days:'🎯';
+}
+
+// =============================================
+// NAVEGAÇÃO
+// =============================================
+const pageMeta={
+  hoje:{title:'Hoje',sub:'Suas metas do dia — 5h de estudo'},
+  calendario:{title:'Calendário',sub:'Planejamento até 11 de outubro de 2026'},
+  materias:{title:'Matérias',sub:'Edital PCPR — Delegado 2026'},
+  pomodoro:{title:'Pomodoro',sub:'Timer de foco e execução'},
+  desempenho:{title:'Desempenho',sub:'Analytics e KPIs de performance'},
+  config:{title:'Configurações',sub:'Personalize seu plano'}
+};
+
+function goTo(page,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(navEl)navEl.classList.add('active');
+  const m=pageMeta[page]||{};
+  document.getElementById('pageTitle').textContent=m.title||page;
+  document.getElementById('pageSub').textContent=m.sub||'';
+  if(page==='hoje')renderHoje();
+  if(page==='calendario')renderCalendario();
+  if(page==='materias')renderMaterias();
+  if(page==='pomodoro')renderPomodoro();
+  if(page==='desempenho')renderDesempenho();
+  if(page==='config')renderConfig();
+}
+
+// =============================================
+// HOJE
+// =============================================
+function calcKpis(){
+  const all=state.subjects.flatMap(s=>s.topics);
+  const total=all.length;
+  const done=all.filter(t=>t.pct===100).length;
+  const geral=total?Math.round(all.reduce((a,t)=>a+t.pct,0)/total):0;
+  const today=todayStr();
+  const todayPend=state.tasks.filter(t=>t.date===today&&!t.done).length;
+  return{geral,total,done,todayPend};
+}
+
+function renderHoje(){
+  const k=calcKpis();
+  document.getElementById('kpiGeral').textContent=k.geral+'%';
+  document.getElementById('kpiHoje').textContent=k.todayPend;
+  document.getElementById('kpiTopicos').textContent=k.done;
+  document.getElementById('kpiTotal').textContent=k.total;
+  const today=todayStr();
+  const todayTasks=state.tasks.filter(t=>t.date===today);
+  const el=document.getElementById('listaTarefasHoje');
+  el.innerHTML=todayTasks.length?todayTasks.map(taskHTML).join(''):'<div class="empty">Clique em "Gerar metas do dia" para criar suas tarefas.</div>';
+  const upcoming=state.tasks.filter(t=>!t.done&&['review','exercise'].includes(t.type)&&t.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8);
+  const elR=document.getElementById('listaRevisoes');
+  elR.innerHTML=upcoming.length?upcoming.map(taskHTML).join(''):'<div class="empty">Nenhuma revisão agendada ainda.<br>Conclua tópicos em Matérias para gerar revisões automáticas.</div>';
+}
+
+function taskHTML(t){
+  const subj=state.subjects.find(s=>s.id===t.subjectId);
+  const topic=subj?.topics.find(tp=>tp.id===t.topicId);
+  const types={study:'📖 Estudo',review:'🔁 Revisão',exercise:'📝 Exercício'};
+  const tagCls={study:'tag-review',review:'tag-review',exercise:'tag-exercise'};
+  const name=topic?.name||t.name||'Tarefa';
+  return`<div class="task-item ${t.done?'done-task':''}">
+    <div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}')"></div>
+    <div class="task-info">
+      <div class="task-name">${name}</div>
+      <div class="task-sub">${subj?.name||''} · ${formatDate(t.date)}${t.duration?' · '+t.duration+'h':''}</div>
+    </div>
+    <div class="task-right">
+      <span class="tag ${tagCls[t.type]||''}" style="font-size:9px">${types[t.type]||t.type}</span>
+      ${t.type==='exercise'&&!t.done?`<button class="btn btn-sm" onclick="openExercicio('${t.subjectId}')">📊</button>`:''}
+    </div>
+  </div>`;
+}
+
+function toggleTask(id){const t=state.tasks.find(t=>t.id===id);if(t){t.done=!t.done;saveState();renderHoje()}}
+
+function gerarMetas(){
+  const today=todayStr();
+  state.tasks=state.tasks.filter(t=>!(t.date===today&&t.type==='study'&&!t.manual));
+  const horas=state.config.hoursPerDay;
+  let used=0;
+  for(const subj of state.subjects){
+    if(used>=horas)break;
+    const pending=subj.topics.filter(t=>t.pct<100);
+    if(!pending.length)continue;
+    const topic=pending[0];
+    const dur=Math.min(1.5,horas-used);
+    state.tasks.push({
+      id:'meta_'+Date.now()+'_'+Math.random(),
+      type:'study',subjectId:subj.id,topicId:topic.id,
+      name:topic.name,date:today,duration:dur,done:false
+    });
+    used+=dur;
+  }
+  saveState();renderHoje();
+}
+
+// =============================================
+// REPETIÇÃO ESPAÇADA
+// =============================================
+function scheduleSpacedRep(subjectId,topicId,completionDate){
+  const valid=state.config.weekDays;
+  REVIEW_INTERVALS.forEach((interval,i)=>{
+    const raw=addDays(completionDate,interval);
+    const dt=nextWorkday(raw,valid);
+    if(dt>DEADLINE_DATE)return; // não agenda depois do deadline
+    const exists=state.tasks.find(t=>t.topicId===topicId&&t.type==='review'&&t.spaced_day===interval);
+    if(!exists)state.tasks.push({id:'rev_'+topicId+'_'+interval+'_'+Date.now(),type:'review',subjectId,topicId,date:dt,spaced_day:interval,round:i+1,done:false,auto:true});
+  });
+  EXERCISE_INTERVALS.forEach((interval,i)=>{
+    const raw=addDays(completionDate,interval);
+    const dt=nextWorkday(raw,valid);
+    if(dt>DEADLINE_DATE)return;
+    const exists=state.tasks.find(t=>t.topicId===topicId&&t.type==='exercise'&&t.spaced_day===interval);
+    if(!exists)state.tasks.push({id:'ex_'+topicId+'_'+interval+'_'+Date.now(),type:'exercise',subjectId,topicId,date:dt,spaced_day:interval,round:i+1,done:false,auto:true,requiresInput:true});
+  });
+  saveState();
+}
+
+// =============================================
+// CALENDÁRIO
+// =============================================
+let calSelected=null;
+function renderCalendario(){
+  if(!state.calMonth)state.calMonth={year:new Date().getFullYear(),month:new Date().getMonth()};
+  const {year,month}=state.calMonth;
+  document.getElementById('calMonthLabel').textContent=new Date(year,month,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const today=todayStr();
+  const grid=document.getElementById('calGrid');
+  grid.innerHTML='';
+  const prevDays=new Date(year,month,0).getDate();
+  for(let i=firstDay-1;i>=0;i--){const c=document.createElement('div');c.className='cal-cell other-month';c.innerHTML=`<div class="cal-date">${prevDays-i}</div>`;grid.appendChild(c)}
+  for(let day=1;day<=daysInMonth;day++){
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const c=document.createElement('div');
+    let cls='cal-cell';
+    if(ds===today)cls+=' today';
+    if(ds===calSelected)cls+=' selected';
+    if(ds===PROVA_DATE)cls+=' prova-day';
+    if(ds===DEADLINE_DATE)cls+=' deadline-day';
+    c.className=cls;
+    const dayTasks=state.tasks.filter(t=>t.date===ds);
+    let inner=`<div class="cal-date">${day}</div>`;
+    if(ds===PROVA_DATE)inner+=`<div class="cal-task-dot" style="background:rgba(240,82,82,.3);color:var(--red)">🎯 PROVA</div>`;
+    if(ds===DEADLINE_DATE)inner+=`<div class="cal-task-dot" style="background:rgba(245,166,35,.2);color:var(--amber)">⚠ Deadline</div>`;
+    dayTasks.slice(0,2).forEach(t=>{
+      const cl=t.type==='review'?'dot-review':t.type==='exercise'?'dot-exercise':'dot-study';
+      const subj=state.subjects.find(s=>s.id===t.subjectId);
+      inner+=`<div class="cal-task-dot ${cl}">${subj?.icon||''}${subj?.name?.split(' ').pop()||''}</div>`;
+    });
+    if(dayTasks.length>2)inner+=`<div style="font-size:9px;color:var(--muted)">+${dayTasks.length-2} mais</div>`;
+    c.innerHTML=inner;
+    c.onclick=()=>calSelectDay(ds);
+    grid.appendChild(c);
+  }
+}
+
+function calSelectDay(ds){
+  calSelected=ds;renderCalendario();
+  const dayTasks=state.tasks.filter(t=>t.date===ds);
+  const detail=document.getElementById('calDayDetail');
+  detail.style.display='block';
+  document.getElementById('calDayTitle').textContent=formatDateLong(ds);
+  const el=document.getElementById('calDayTasks');
+  if(ds===PROVA_DATE){el.innerHTML='<div style="text-align:center;padding:1rem;font-size:13px;color:var(--red)">🎯 DIA DA PROVA OBJETIVA — PCPR 2026<br>Curitiba / Londrina / Cascavel</div>';return}
+  el.innerHTML=dayTasks.length?dayTasks.map(taskHTML).join(''):'<div class="empty">Nenhuma tarefa neste dia.</div>';
+}
+
+function calPrev(){if(!state.calMonth)state.calMonth={year:new Date().getFullYear(),month:new Date().getMonth()};state.calMonth.month--;if(state.calMonth.month<0){state.calMonth.month=11;state.calMonth.year--}renderCalendario()}
+function calNext(){if(!state.calMonth)state.calMonth={year:new Date().getFullYear(),month:new Date().getMonth()};state.calMonth.month++;if(state.calMonth.month>11){state.calMonth.month=0;state.calMonth.year++}renderCalendario()}
+
+// =============================================
+// MATÉRIAS
+// =============================================
+function renderMaterias(){
+  document.getElementById('subjectList').innerHTML=state.subjects.map(subjectCardHTML).join('');
+}
+
+function subjectCardHTML(s){
+  const total=s.topics.length;
+  const pct=total?Math.round(s.topics.reduce((a,t)=>a+t.pct,0)/total):0;
+  const done=s.topics.filter(t=>t.pct===100).length;
+  const c=pct>=70?'var(--green)':pct>=30?'var(--amber)':'var(--accent)';
+  return`<div class="subject-card" id="sc_${s.id}">
+    <div class="subject-header" onclick="toggleSubject('${s.id}')">
+      <div class="subject-icon" style="background:${s.color}20;color:${s.color}">${s.icon}</div>
+      <div class="subject-info">
+        <div class="subject-name">${s.name}</div>
+        <div class="subject-stats">${done}/${total} tópicos · ${s.hoursTotal}h previstas</div>
+        <div class="progress-wrap" style="margin-top:4px;width:100px"><div class="progress-fill" style="width:${pct}%;background:${c}"></div></div>
+      </div>
+      <span class="subject-pct" style="color:${c}">${pct}%</span>
+      <span class="subject-chevron" id="chev_${s.id}">▼</span>
+    </div>
+    <div class="subject-body" id="body_${s.id}">
+      ${s.topics.map(t=>topicRowHTML(s,t)).join('')}
+    </div>
+  </div>`;
+}
+
+function topicRowHTML(s,t){
+  const c=t.pct===100?'var(--green)':t.pct>0?'var(--amber)':'var(--muted)';
+  const tag=t.pct===100?'<span class="tag tag-done">✓</span>':t.pct>0?'<span class="tag tag-progress">Em andamento</span>':'<span class="tag tag-pending">Pendente</span>';
+  return`<div class="topic-row">
+    <div class="topic-name">${t.name}</div>
+    ${tag}
+    <span class="topic-pct" style="color:${c}">${t.pct}%</span>
+    <div class="topic-bar"><div class="progress-wrap"><div class="progress-fill" style="width:${t.pct}%;background:${c}"></div></div></div>
+    <button class="topic-btn" onclick="openTopicModal('${s.id}','${t.id}')">Editar</button>
+  </div>`;
+}
+
+function toggleSubject(id){document.getElementById('body_'+id)?.classList.toggle('open');document.getElementById('chev_'+id)?.classList.toggle('open')}
+function expandAll(){state.subjects.forEach(s=>{document.getElementById('body_'+s.id)?.classList.add('open');document.getElementById('chev_'+s.id)?.classList.add('open')})}
+function collapseAll(){state.subjects.forEach(s=>{document.getElementById('body_'+s.id)?.classList.remove('open');document.getElementById('chev_'+s.id)?.classList.remove('open')})}
+
+// =============================================
+// MODAL PROGRESSO
+// =============================================
+let modalMeta=null;
+function openTopicModal(sid,tid){
+  const subj=state.subjects.find(s=>s.id===sid);
+  const topic=subj?.topics.find(t=>t.id===tid);
+  if(!topic)return;
+  modalMeta={sid,tid};
+  document.getElementById('modalTitle').textContent=subj.name;
+  document.getElementById('modalTopicName').textContent=topic.name;
+  document.getElementById('modalSlider').value=topic.pct;
+  document.getElementById('modalPct').textContent=topic.pct+'%';
+  document.getElementById('modalProgress').classList.add('open');
+}
+
+function saveTopicProgress(){
+  if(!modalMeta)return;
+  const{sid,tid}=modalMeta;
+  const pct=parseInt(document.getElementById('modalSlider').value);
+  const subj=state.subjects.find(s=>s.id===sid);
+  const topic=subj?.topics.find(t=>t.id===tid);
+  if(!topic)return;
+  const wasDone=topic.pct===100;
+  topic.pct=pct;
+  if(pct===100&&!wasDone){
+    topic.completedAt=todayStr();
+    scheduleSpacedRep(sid,tid,todayStr());
+    alert(`✅ Tópico concluído!\n\n🔁 ${REVIEW_INTERVALS.length} revisões agendadas automaticamente\n📝 ${EXERCISE_INTERVALS.length} exercícios agendados\n\nVeja o Calendário para conferir as datas!`);
+  }
+  saveState();closeModal('modalProgress');renderMaterias();
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');modalMeta=null}
+
+// =============================================
+// EXERCÍCIOS
+// =============================================
+function openExercicio(sid){
+  const sel=document.getElementById('exSubject');
+  sel.innerHTML=state.subjects.map(s=>`<option value="${s.id}"${s.id===sid?' selected':''}>${s.name}</option>`).join('');
+  document.getElementById('exDate').value=todayStr();
+  document.getElementById('exTotal').value=10;
+  document.getElementById('exCorrect').value=7;
+  document.getElementById('exNotes').value='';
+  document.getElementById('modalExercicio').classList.add('open');
+}
+
+function saveExercicio(){
+  const sid=document.getElementById('exSubject').value;
+  const total=parseInt(document.getElementById('exTotal').value)||0;
+  const correct=Math.min(parseInt(document.getElementById('exCorrect').value)||0,total);
+  const date=document.getElementById('exDate').value||todayStr();
+  const notes=document.getElementById('exNotes').value;
+  if(!total){alert('Informe o total de questões.');return}
+  state.performance.push({id:'p_'+Date.now(),subjectId:sid,total,correct,accuracy:Math.round(correct/total*100),date,notes,loggedAt:new Date().toISOString()});
+  saveState();closeModal('modalExercicio');renderDesempenho();
+  alert(`📊 Registrado!\n\nAcertos: ${correct}/${total} (${Math.round(correct/total*100)}%)`);
+}
+
+function openAddTask(){
+  document.getElementById('taskSubject').innerHTML=state.subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('taskDate').value=todayStr();
+  document.getElementById('modalAddTask').classList.add('open');
+}
+
+function saveTask(){
+  const type=document.getElementById('taskType').value;
+  const sid=document.getElementById('taskSubject').value;
+  const date=document.getElementById('taskDate').value||todayStr();
+  const dur=parseFloat(document.getElementById('taskDuration').value)||1;
+  state.tasks.push({id:'manual_'+Date.now(),type,subjectId:sid,topicId:null,date,duration:dur,done:false,manual:true});
+  saveState();closeModal('modalAddTask');renderHoje();
+}
+
+// =============================================
+// POMODORO
+// =============================================
+const POMO_MODES={standard:{focus:25,short:5,long:30,sets:4},focus:{focus:50,short:10,long:30,sets:4}};
+let pomoMode='standard',pomoRunning=false,pomoPhase='idle',pomoSec=25*60,pomoDone=0,pomoInterval=null;
+
+function renderPomodoro(){
+  const cfg=POMO_MODES[pomoMode];
+  document.getElementById('pomoCycleInfo').innerHTML=`
+    <b>Modo ${pomoMode==='standard'?'Standard':'Alta Foco'} — 5h = ${Math.floor(300/cfg.focus)} ciclos</b><br>
+    🍅 ${cfg.focus}min foco → ⏸ ${cfg.short}min pausa<br>
+    🍅 ${cfg.focus}min foco → ⏸ ${cfg.short}min pausa<br>
+    🍅 ${cfg.focus}min foco → ⏸ ${cfg.short}min pausa<br>
+    🍅 ${cfg.focus}min foco → 💤 ${cfg.long}min descanso longo<br>
+    <span style="color:var(--accent)">Foco líquido por set: ${cfg.focus*4}min</span>
+  `;
+  updatePomoUI();
+}
+
+function updatePomoUI(){
+  const cfg=POMO_MODES[pomoMode];
+  const total=pomoPhase==='short'?cfg.short*60:pomoPhase==='long'?cfg.long*60:cfg.focus*60;
+  const pct=total>0?(total-pomoSec)/total:0;
+  const circ=396;
+  document.getElementById('pomoTime').textContent=`${String(Math.floor(pomoSec/60)).padStart(2,'0')}:${String(pomoSec%60).padStart(2,'0')}`;
+  document.getElementById('pomoCircle').setAttribute('stroke-dashoffset',circ-(pct*circ));
+  const colors={idle:'var(--accent)',focus:'var(--accent)',short:'var(--green)',long:'var(--purple)'};
+  const labels={idle:'pronto',focus:'focando',short:'pausa curta',long:'pausa longa'};
+  document.getElementById('pomoPhase').textContent=labels[pomoPhase]||pomoPhase;
+  document.getElementById('pomoCircle').setAttribute('stroke',colors[pomoPhase]||'var(--accent)');
+  document.getElementById('pomoBtn').textContent=pomoRunning?'⏸ Pausar':pomoPhase==='idle'?'▶ Iniciar':'▶ Continuar';
+  for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('active',i<pomoDone%4);
+}
+
+function pomoTick(){
+  if(pomoSec>0){pomoSec--;updatePomoUI();return}
+  const cfg=POMO_MODES[pomoMode];
+  if(pomoPhase==='focus'){pomoDone++;if(pomoDone%cfg.sets===0){pomoPhase='long';pomoSec=cfg.long*60}else{pomoPhase='short';pomoSec=cfg.short*60}}
+  else{pomoPhase='focus';pomoSec=cfg.focus*60}
+  updatePomoUI();
+}
+
+function pomoToggle(){
+  if(!pomoRunning){if(pomoPhase==='idle'){pomoPhase='focus';pomoSec=POMO_MODES[pomoMode].focus*60}pomoRunning=true;pomoInterval=setInterval(pomoTick,1000)}
+  else{pomoRunning=false;clearInterval(pomoInterval)}
+  updatePomoUI();
+}
+
+function pomoReset(){pomoRunning=false;clearInterval(pomoInterval);pomoPhase='idle';pomoDone=0;pomoSec=POMO_MODES[pomoMode].focus*60;updatePomoUI()}
+function pomoSetMode(m,btn){pomoMode=m;pomoReset();document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderPomodoro()}
+
+// =============================================
+// DESEMPENHO
+// =============================================
+function renderDesempenho(){
+  const perfs=state.performance;
+  const total=perfs.reduce((a,p)=>a+p.total,0);
+  const correct=perfs.reduce((a,p)=>a+p.correct,0);
+  const acc=total?Math.round(correct/total*100):null;
+  document.getElementById('dAccGeral').textContent=acc!==null?acc+'%':'—';
+  document.getElementById('dQuestoes').textContent=total;
+  document.getElementById('dExercicios').textContent=perfs.length;
+  const byS={};
+  perfs.forEach(p=>{if(!byS[p.subjectId])byS[p.subjectId]={t:0,c:0};byS[p.subjectId].t+=p.total;byS[p.subjectId].c+=p.correct});
+  const arr=Object.entries(byS).map(([id,d])=>({id,acc:d.t?Math.round(d.c/d.t*100):0})).sort((a,b)=>b.acc-a.acc);
+  if(arr[0]){const s=state.subjects.find(s=>s.id===arr[0].id);document.getElementById('dMelhor').textContent=s?.name?.split(' ').slice(-2).join(' ')||'—'}
+  const elA=document.getElementById('accBySubject');
+  elA.innerHTML=arr.length?arr.map(s=>{
+    const subj=state.subjects.find(sub=>sub.id===s.id);
+    const c=s.acc>=70?'var(--green)':s.acc>=50?'var(--amber)':'var(--red)';
+    return`<div class="bar-row"><span class="bar-label" title="${subj?.name}">${subj?.name||s.id}</span><div class="bar-wrap"><div class="bar-fill" style="width:${s.acc}%;background:${c}"></div></div><span class="bar-val" style="color:${c}">${s.acc}%</span></div>`;
+  }).join(''):'<div class="empty">Registre exercícios para ver os dados.</div>';
+  const elL=document.getElementById('lastExercises');
+  const last=[...perfs].sort((a,b)=>b.loggedAt.localeCompare(a.loggedAt)).slice(0,6);
+  elL.innerHTML=last.length?last.map(p=>{
+    const subj=state.subjects.find(s=>s.id===p.subjectId);
+    const c=p.accuracy>=70?'var(--green)':p.accuracy>=50?'var(--amber)':'var(--red)';
+    return`<div class="task-item"><div class="task-info"><div class="task-name">${subj?.name||p.subjectId}</div><div class="task-sub">${formatDate(p.date)} · ${p.correct}/${p.total} acertos${p.notes?' · '+p.notes:''}</div></div><span style="font-size:13px;font-weight:700;color:${c}">${p.accuracy}%</span></div>`;
+  }).join(''):'<div class="empty">Nenhum exercício registrado ainda.</div>';
+}
+
+// =============================================
+// CONFIG
+// =============================================
+function renderConfig(){
+  const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  document.getElementById('weekDaysConfig').innerHTML=days.map((d,i)=>
+    `<button class="btn btn-sm ${state.config.weekDays.includes(i)?'btn-primary':''}" onclick="toggleDay(${i},this)">${d}</button>`
+  ).join('');
+  document.getElementById('horasSlider').value=state.config.hoursPerDay;
+  document.getElementById('horasVal').textContent=state.config.hoursPerDay+'h';
+  document.getElementById('startDate').value=state.config.startDate||todayStr();
+  const total=state.subjects.flatMap(s=>s.topics).length;
+  const done=state.subjects.flatMap(s=>s.topics).filter(t=>t.pct===100).length;
+  const totalH=state.subjects.reduce((a,s)=>a+s.hoursTotal,0);
+  const daysLeft=daysUntil(DEADLINE_DATE);
+  document.getElementById('planSummary').innerHTML=[
+    `📚 <b>${state.subjects.length}</b> matérias no plano`,
+    `📋 <b>${total}</b> tópicos totais`,
+    `✅ <b>${done}</b> tópicos concluídos`,
+    `⏱ <b>${totalH}h</b> de conteúdo total`,
+    `📅 <b>${daysLeft}</b> dias até o deadline (4/out)`,
+    `🎯 Prova: <b>11 de outubro de 2026</b>`,
+    `⚡ Meta: <b>${state.config.hoursPerDay}h/dia</b> × <b>${state.config.weekDays.length} dias/sem</b>`
+  ].join('<br>');
+}
+
+function toggleDay(i,btn){const idx=state.config.weekDays.indexOf(i);if(idx>=0)state.config.weekDays.splice(idx,1);else state.config.weekDays.push(i);btn.classList.toggle('btn-primary',state.config.weekDays.includes(i))}
+function saveConfig(){state.config.hoursPerDay=parseInt(document.getElementById('horasSlider').value)||5;state.config.startDate=document.getElementById('startDate').value||todayStr();saveState();renderConfig();alert('✅ Configurações salvas!')}
+
+// =============================================
+// IMPORT / EXPORT
+// =============================================
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`pcpr_backup_${todayStr()}.json`;a.click();
+}
+function importData(){
+  const input=document.createElement('input');input.type='file';input.accept='.json';
+  input.onchange=e=>{
+    const file=e.target.files[0];if(!file)return;
+    const r=new FileReader();
+    r.onload=ev=>{try{const p=JSON.parse(ev.target.result);state={...state,...p,calMonth:null};saveState();goTo('hoje',null);alert('✅ Dados importados!')}catch(e){alert('❌ Arquivo inválido.')}};
+    r.readAsText(file);
+  };input.click();
+}
+
+// =============================================
+// INIT
+// =============================================
+function init(){
+  const now=new Date();
+  document.getElementById('dateBadge').textContent=now.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  loadState();
+  updateCountdown();
+  setInterval(updateCountdown,60000);
+  // Ativa o nav item correto
+  document.querySelector('.nav-item').classList.add('active');
+}
+init();
+</script>
+</body>
+</html>
